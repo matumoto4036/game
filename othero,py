@@ -1,0 +1,125 @@
+import random
+
+def print_board(board):
+    print('  a b c d e f g h')
+    for i, row in enumerate(board):
+        print(f"{i+1} {' '.join(row)}")
+
+def initialize_board():
+    board = [['.' for _ in range(8)] for _ in range(8)]
+    board[3][3], board[3][4] = 'W', 'B'
+    board[4][3], board[4][4] = 'B', 'W'
+    return board
+
+def is_valid_move(board, player, row, col):
+    # Check if the move is within bounds and the cell is empty
+    if row < 0 or row >= 8 or col < 0 or col >= 8 or board[row][col] != '.':
+        return False
+    # Check all directions for valid moves
+    directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+    opponent = 'B' if player == 'W' else 'W'
+    valid = False
+    for dr, dc in directions:
+        r, c = row + dr, col + dc
+        if r < 0 or r >= 8 or c < 0 or c >= 8 or board[r][c] != opponent:
+            continue
+        # Move in the direction while the opponent's pieces are present
+        while 0 <= r < 8 and 0 <= c < 8 and board[r][c] == opponent:
+            r += dr
+            c += dc
+        # Check if we found a player's piece after moving through opponent's pieces
+        if 0 <= r < 8 and 0 <= c < 8 and board[r][c] == player:
+            valid = True
+            break
+    return valid
+
+def make_move(board, player, row, col):
+    if not is_valid_move(board, player, row, col):
+        return False
+    directions = [(-1, -1), (-1, 0), (-1, 1), (0, -1), (0, 1), (1, -1), (1, 0), (1, 1)]
+    opponent = 'B' if player == 'W' else 'W'
+    board[row][col] = player
+    for dr, dc in directions:
+        r, c = row + dr, col + dc
+        if r < 0 or r >= 8 or c < 0 or c >= 8 or board[r][c] != opponent:
+            continue
+        # Move in the direction while the opponent's pieces are present
+        pieces_to_flip = []
+        while 0 <= r < 8 and 0 <= c < 8 and board[r][c] == opponent:
+            pieces_to_flip.append((r, c))
+            r += dr
+            c += dc
+        # Check if we found a player's piece after moving through opponent's pieces
+        if 0 <= r < 8 and 0 <= c < 8 and board[r][c] == player:
+            for pr, pc in pieces_to_flip:
+                board[pr][pc] = player
+    return True
+
+def get_valid_moves(board, player):
+    valid_moves = []
+    for row in range(8):
+        for col in range(8):
+            if is_valid_move(board, player, row, col):
+                valid_moves.append((row, col))
+    return valid_moves
+
+def ai_move(board, player):
+    valid_moves = get_valid_moves(board, player)
+    return random.choice(valid_moves) if valid_moves else None
+
+def player_move(board, player):
+    while True:
+        move = input(f"Player {player}, enter your move (e.g., 'e6'), or '0' for a random move: ")
+        if move == '0':
+            valid_moves = get_valid_moves(board, player)
+            if not valid_moves:
+                return None, None  # No valid moves available
+            return random.choice(valid_moves)
+        else:
+            if len(move) != 2 or not move[0].isalpha() or not move[1].isdigit():
+                print("Invalid input. Please enter a column followed by a row (e.g., 'e6'), or '0' for a random move.")
+                continue
+            col = ord(move[0].lower()) - ord('a')
+            row = int(move[1]) - 1
+            if is_valid_move(board, player, row, col):
+                return row, col
+            else:
+                print("Invalid move. Please try again.")
+
+def main():
+    board = initialize_board()
+    player = 'B'  # Black starts
+    while True:
+        print_board(board)
+        row, col = player_move(board, player)
+        if row is None and col is None:
+            print(f"Player {player} has no valid moves. Skipping turn.")
+            # Switch players
+            player = 'W' if player == 'B' else 'B'
+            continue
+
+        make_move(board, player, row, col)
+        # Switch players
+        player = 'W' if player == 'B' else 'B'
+        # TODO: Add logic to check for game over and to count scores.
+
+def main_2player():
+    board = initialize_board()
+    player = 'B'  # Black starts
+    while True:
+        print_board(board)
+        move = input(f"Player {player}, enter your move (e.g., 'e6'): ")
+        if len(move) != 2 or not move[0].isalpha() or not move[1].isdigit():
+            print("Invalid input. Please enter a column followed by a row (e.g., 'e6').")
+            continue
+        col = ord(move[0].lower()) - ord('a')
+        row = int(move[1]) - 1
+        if not is_valid_move(board, player, row, col):
+            print("Invalid move. Please try again.")
+            continue
+        make_move(board, player, row, col)
+        player = 'W' if player == 'B' else 'B'  # Switch players
+        # TODO: Add logic to check for game over and to count scores.
+
+if __name__ == "__main__":
+    main()
